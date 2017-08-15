@@ -1,0 +1,33 @@
+language: python
+
+python:
+    - 3.6
+    - 2.7
+
+before_install:
+    - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
+    - chmod +x miniconda.sh
+    - ./miniconda.sh -b -p $HOME/miniconda
+    - export PATH=$HOME/miniconda/bin:$PATH
+    - conda update --yes conda
+
+install:
+    - conda create --yes -n test python=$TRAVIS_PYTHON_VERSION
+    - source activate test
+    - conda install --yes cython
+    - pip install runtests
+    - python setup.py install
+
+script:
+    - python ./runtests.py
+    - bash check_tag.sh orderedobject.pyx
+
+deploy:
+    - provider: pypi
+      distributions: sdist
+      user: "rainwoodman"
+      password:
+          secure: "UXlm5A3MqmKHst3SZHUmNx0yiAR566Lx4mkciGKGxs9hb0JKxyTEi1dXSk0yfcTN3SNK306RwSiDcN4gJX/s8jEA8gEicYOjFUKa65EFyjEynxeogxE5MAGpo/zHSQMtBiHc4B0T/eqO8zezt/QA9IfEsXQoOWXJ8z5qNmvLV5DKYWPYNDCSwGUIgPQqV5AvWaS+PlOskDoFt4dD0kEaHhABAtivhdK5xdKhH758xL0bOkjhxCfiiwTqJl3LtbL5xEPxbnjVxQWy3gDzHxHrwS9SRFAhJvGU0XGQLGl1wd0VoYeUYfZB5kE+L7AqqNrrchCBtIi7xXBPOc/eehRSureGPPRw+6idT1btZRkjDbmissUAL70veVtz14c/7e+NAaMYrwASoiCKedx9XFdJBAMNSU5koxVJS6ZwuoQ0uYAbzpw0vkR2W/wFWWAWUF9luKBPD/J+/8DPG53QI1sH0RigICtUuZ7q/e+u5lDE8Wbn/WL+OGVnGfmmrLmrRSCk/Mdc5v+vXh771mMTDDE0dWN3sTpvv3391ziEouFKEpyI21jQJJvHwVqyPNatRJXuTYchlTlRnBv1kGV7uvE95hQ/x5Qb1a6H6fjIgwuhOdlkdJZxmcXCCsfdGYMz65SlAbcw0hbhRwqmEHIe97oweIs504CdULjyP0Jr1LQjvPM="
+      on:
+        tags   : true
+        condition : ${TRAVIS_JOB_NUMBER##*.} == 1
