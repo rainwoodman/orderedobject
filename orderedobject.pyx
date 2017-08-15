@@ -94,6 +94,15 @@ cdef class ordereddict(dict):
         for i in self.__order__:
             yield i
 
+    def keys(self):
+        return self.__order__
+
+    def values(self):
+        return [self[k] for k in self.__order__]
+
+    def items(self):
+        return [(k, self[k]) for k in self.__order__]
+
     def __delitem__(self, name):
         if name in self:
             self.__order__.remove(name)
