@@ -1,5 +1,6 @@
 from orderedobject import orderedobject
 from orderedobject import OrderedClass
+import pytest
 
 import gc
 from weakref import proxy
@@ -23,8 +24,8 @@ def test_orderedobject():
 
     l = []
     w = []
-    o.a = make_removable('a', l, w)
     o.b = make_removable('b', l, w)
+    o.a = make_removable('a', l, w)
 
     print("Before deleting", l)
     del o # trigger deletion
@@ -33,8 +34,8 @@ def test_orderedobject():
     print("After gc", l)
 
     # assert reversed order.
-    assert l[0] == 'b'
-    assert l[1] == 'a'
+    assert l[0] == 'a'
+    assert l[1] == 'b'
 
 def test_pickle():
     import pickle
@@ -46,14 +47,15 @@ def test_pickle():
     assert o2.a == o.a
     assert o2.b == o.b
 
+@pytest.mark.xfail(reason="See https://github.com/cython/cython/issues/1821")
 def test_orderedclass():
     gc.collect() # forcefully with GC.
 
     l = []
     w = []
     class A(metaclass=OrderedClass):
-        a = make_removable('a', l, w)
         b = make_removable('b', l, w)
+        a = make_removable('a', l, w)
 
     print("Before deleting", l)
 #    print(A.__dict__.__order__)

@@ -1,25 +1,41 @@
 cimport cython
 __version__ = "0.0.0"
 
-# do not prepend tp_clear because we will use these objects
-# during destruction. 
 
+# Important: do not override tp_clear because we will explicitly
+# unref members of __dict__ in order during the dealloc.
 @cython.no_gc_clear
 cdef class orderedobject:
-    """ An object whose attributes are unreferenced by the reversed order they are attached.
+    """ A base class for objects whose attributes
+        are unreferenced by the reverse of the order they are defined.
 
-        orderedobject is most useful to manage life cycle of resources with the object
-        life cycles. In Python these are usually decoupled -- and hence contexts managers
-        are usually recommended. However there are cases when the life cycle of resources
-        is much longer than a single code segment, and in those cases it feels more natural
-        to manage resource life cycle with the object life cycle -- which has been
-        a prominent programming model in traditional programming languages like C -- look at
+        An orderedobject is likely not GC friendly. Avoid cyclic references involving
+        orderedobject.
+
+        Notes:
+
+        orderedobject is most useful to when the life cycle of a resource
+        is managed with the life cycle of an object.
+
+        In Python we are usually recommended to use contexts managers to
+        decouple the life cycle of a short-living resource; even though the
+        original purpose of context managers was to gracefully handle exceptions
+        during the locking / owning of such resources.
+
+        In some scenarios, the life cycle of a resource can be quite long. For
+        example, the life cycle of a FFTW plan can be much longer than a simple
+        code segment, for it is reused many times. In addition, in a parallel
+        application the FFTW `plan` must be destroyed collectively, or the
+        behavior of the application becomes undefined. This is when deriving
+        from orderedobject becomes useful.
+
+        -- look at
         the stdio API .. fclose and fopen does both memory and resource management!
-
     """
     cdef dict __dict__
     cdef list __attrorder__
     cdef object __weakref__
+
     def __cinit__(self):
         self.__dict__ = dict()
         self.__attrorder__ = []
@@ -40,6 +56,9 @@ cdef class orderedobject:
         for key in reversed(self.__attrorder__):
             self.__dict__.pop(key)
 
+    def __dir__(self):
+        return sorted(object.__dir__(self))
+
     def __reduce__(self):
         return unpickle_object, (self.__dict__, self.__attrorder__)
 
@@ -49,12 +68,16 @@ def unpickle_object(dict, attrorder):
     obj.__attrorder__.extend(attrorder)
     return obj
 
-
 # -----------
 # From here and below things shall be used with more care ...
 #
+@cython.no_gc_clear
 cdef class ordereddict(dict):
-    """ the important feature is reversed destruction order. """
+    """ A dictionary that dereferences its members in the order
+        that they are added.
+
+        ordereddict is likely not GC friendly. Avoid cyclic references.
+    """
     # FIXME: this only provides a subset of collections.OrderedDict.
 
     cdef list __order__
@@ -66,6 +89,10 @@ cdef class ordereddict(dict):
         if name not in self:
             self.__order__.append(name)
         dict.__setitem__(self, name, value)
+
+    def __iter__(self):
+        for i in self.__order__:
+            yield i
 
     def __delitem__(self, name):
         if name in self:
@@ -86,20 +113,39 @@ def unpickle_dict(dict, order):
         obj[i] = dict[i]
     return obj
 
+@cython.no_gc
 @cython.no_gc_clear
-#@cython.no_gc
 cdef class OrderedClass(type):
-    """ This is stolen from
+    """ A metaclass for classes that dereferences class members are in
+        a consistent order. (currently the reverse of the order they are defined).
+
+        This does not yet work due to https://github.com/cython/cython/issues/1821.
+
+        This does not apply to the instance members.
+
+        OrderedClass is likely not GC friendly. Avoid cyclic references. In general
+        avoid holding long living resources in a class as a static member in the
+        design might be a good idea. Classes shall be less fluidy than objects.
+
+        This is stolen from
+
         https://docs.python.org/3/reference/datamodel.html#metaclass-example
 
-        We replace the dictionary of the class during type construction with
+        We replace the dictionary of the class during type construction an
+        ordereddict().
+
+        Warning:
+
+        The destruction order of attributes added out side of the class scope
+        is still undeterministic. This is because only members defined inside
+        of the class scope are stored in the dictionary created by `__prepare__`.
+
     """
     cdef list __attrorder__
 
-    # FIXME: This doesn't work if attributes are attached later.
-    # managing life cycles of resources with classes is a bad idea anyways.
     @classmethod
     def __prepare__(metacls, name, bases, **kwds):
+        raise RuntimeError("This does not work due to a potential bug or special feature of Cython.")
         return ordereddict()
 
     #def __new__(cls, name, bases, namespace, **kwds):
@@ -110,6 +156,6 @@ cdef class OrderedClass(type):
         self.__attrorder__.extend(namespace.__order__)
 
     def __dealloc__(self):
-        print('dealloc', self.__attrorder__)
+        print('dealloc', self.__attrorder__, self.__dict__)
         for key in reversed(self.__attrorder__):
             self.__dict__.pop(key)
