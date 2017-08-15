@@ -1,6 +1,8 @@
 from orderedobject import orderedobject
 from orderedobject import ordereddict
 from orderedobject import OrderedClass
+import sys
+
 import pytest
 
 import gc
@@ -69,6 +71,7 @@ def test_ordereddict():
     assert l[1] == 'b'
 
 @pytest.mark.xfail(reason="See https://github.com/cython/cython/issues/1821")
+@pytest.mark.xskip(sys.version_info < (3, 0), reason="metaclass syntax only works in Python 3")
 def test_orderedclass():
     gc.collect() # forcefully with GC.
 
