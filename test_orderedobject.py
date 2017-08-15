@@ -77,12 +77,24 @@ def test_orderedclass():
 
     l = []
     w = []
-    class A(metaclass=OrderedClass):
-        b = make_removable('b', l, w)
-        a = make_removable('a', l, w)
+
+    # the awkward stuff is to avoid an error Python 2.7 trying to parse this code.
+
+    d = dict(locals())
+    G = dict(globals())
+    G.update(d)
+    exec(
+"""
+class A(metaclass=OrderedClass):
+    b = make_removable('b', l, w)
+    a = make_removable('a', l, w)
+""", G, d)
+    A = d['A']
+    del d
+    del G
 
     print("Before deleting", l)
-#    print(A.__dict__.__order__)
+    print(A.__dict__.__order__)
     del A
 
     print("After deleting", l)
@@ -90,6 +102,5 @@ def test_orderedclass():
     print("After gc", l)
 
     # assert reversed order.
-    assert l[0] == 'b'
-    assert l[1] == 'a'
-    
+    assert l[0] == 'a'
+    assert l[1] == 'b'
