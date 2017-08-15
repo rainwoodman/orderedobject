@@ -14,7 +14,7 @@ before_install:
 install:
     - conda create --yes -n test python=$TRAVIS_PYTHON_VERSION
     - source activate test
-    - conda install --yes cython
+    - conda install --yes cython numpy
     - pip install runtests
     - python setup.py install
 
