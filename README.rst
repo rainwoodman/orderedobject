@@ -1,11 +1,27 @@
+orderedobject
+=============
+
+Travis-CI Status
+
+.. image:: https://travis-ci.org/rainwoodman/orderedobject.svg?branch=master
+    :target: https://travis-ci.org/rainwoodman/orderedobject
+
+.. author:: Yu Feng <rainwoodman@gmail.com>
+
+
+.. notes::
+
+    These represents my current understanding of MPI and Python at the time of writing.
+    Comments and corrections to my opinion / analysis is highly welcomed.
+
 Overview
 --------
 
-The object class in Python does not guarentee an order deferencing attributes
+The `object` class in Python does not guarentee an order deferencing attributes
 during the deconstruction of the object.
 
-The base class here, `orderedobject` provides a deterministic destruction order.
-Currently the order is reversed order of the creation order.
+The base class here, `orderedobject` provides a deterministic order.
+Currently the order is the reversed sequence of the creation sequence.
 
 Motivation
 ----------
@@ -30,7 +46,7 @@ this `orderedobject` base class.
 Uncovered Case
 --------------
 
-For parallel applications, we still have a difficulty when the life cycle of 
+For parallel applications, we still have difficulty when the life cycle of 
 objects itself becomes non-deterministic. This can happen when automated garbage collection
 is involved. The object is destroyed only when the garbage collection occurs.
 Fortunately in CPython this is only triggered when there is cyclic reference.
@@ -51,8 +67,3 @@ objects further down stream of the application stack, or mask the difficulty by
 making it harder to observe the underlying collective object pattern.
 
 
-
-These represents my current understanding of MPI and Python at the time of writing.
-Comments and corrections to my opinion / analysis is highly welcomed.
-
-.. author :: Yu Feng <rainwoodman@gmail.com>
