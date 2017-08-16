@@ -24,10 +24,10 @@ extensions = cythonize(extensions)
 setup(
     name="orderedobject", version=find_version("orderedobject.pyx"),
     author="Yu Feng",
-    description="Ordered Object; attributes are destroyed by the order of creation ",
+    description="An orderedobject unreferences its attributes with a deterministic order",
+    home_page="https://github.com/rainwoodman/orderedobject",
     install_requires=['cython'],
-
-    license='GPL3',
+    license='BSD-2-Clause',
     py_modules = ["test_orderedobject"],
     ext_modules = extensions,
 )
