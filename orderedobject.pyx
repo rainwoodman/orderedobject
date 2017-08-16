@@ -1,5 +1,5 @@
 cimport cython
-__version__ = "0.0.0"
+__version__ = "0.0.1"
 
 
 # Important: do not override tp_clear because we will explicitly
