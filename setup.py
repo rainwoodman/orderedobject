@@ -25,7 +25,7 @@ setup(
     name="orderedobject", version=find_version("orderedobject.pyx"),
     author="Yu Feng",
     description="An orderedobject unreferences its attributes with a deterministic order",
-    home_page="https://github.com/rainwoodman/orderedobject",
+    url="https://github.com/rainwoodman/orderedobject",
     install_requires=['cython'],
     license='BSD-2-Clause',
     py_modules = ["test_orderedobject"],
